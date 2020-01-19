@@ -1,0 +1,2 @@
+[feeds]
+weather = 'https://weather.gc.ca/rss/battleboard/mb9_e.xml'
