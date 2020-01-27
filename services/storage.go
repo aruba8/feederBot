@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -11,7 +12,8 @@ import (
 
 type StorageInterface interface {
 	SaveAlert(alert Alert) (bool, error)
-	FindAlerts(interface{}) []*Alert
+	FindAlerts(interface{}, string) []Alert
+	FindAllAlerts(limit int64, orderBy string, orderDirection int) []Alert
 }
 
 type MongodbStorage struct {
@@ -32,20 +34,53 @@ func (m *MongodbStorage) SaveAlert(alert Alert) (bool, error) {
 	}
 }
 
-func (m *MongodbStorage) FindAlerts(filter interface{}) []*Alert {
-	cursor, err := m.collection.Find(m.ctx, filter)
+func (m *MongodbStorage) FindAlerts(filter interface{}, sortBy string) []Alert {
+	opts := options.Find()
+	opts.SetSort(bson.D{{
+		Key:   sortBy,
+		Value: -1,
+	}})
+
+	cursor, err := m.collection.Find(m.ctx, filter, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer cursor.Close(m.ctx)
-	var results []*Alert
+	var results []Alert
 	for cursor.Next(m.ctx) {
 		var alert Alert
 		err := cursor.Decode(&alert)
 		if err != nil {
 			log.Fatal(err)
 		}
-		results = append(results, &alert)
+		results = append(results, alert)
+	}
+	if err := cursor.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return results
+}
+
+func (m *MongodbStorage) FindAllAlerts(limit int64, orderBy string, orderDirection int) []Alert {
+	opts := options.Find()
+	opts.SetLimit(limit)
+	opts.SetSort(bson.D{{
+		Key:   orderBy,
+		Value: orderDirection,
+	}})
+	cursor, err := m.collection.Find(m.ctx, bson.D{}, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer cursor.Close(m.ctx)
+	var results []Alert
+	for cursor.Next(m.ctx) {
+		var alert Alert
+		err := cursor.Decode(&alert)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, alert)
 	}
 	if err := cursor.Err(); err != nil {
 		log.Fatal(err)
@@ -74,6 +109,7 @@ func NewStorageService(storageImpl StorageInterface) *Storage {
 
 type Alert struct {
 	ID          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	EntryId     string             `json:"entry_id" bson:"entry_id"`
 	FeedLink    string             `json:"feed_link,omitempty" bson:"feed_link,omitempty"`
 	Title       string             `json:"title" bson:"title,omitempty"`
 	Datetime    time.Time          `json:"datetime,omitempty" bson:"datetime,omitempty"`

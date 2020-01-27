@@ -35,6 +35,8 @@ func convert(item *gofeed.Item, feed *gofeed.Feed) services.Alert {
 	alert.Updated = updated
 	alert.Published = published
 	alert.Categories = item.Categories
+	alert.EntryId = item.GUID
+	alert.Description = item.Description
 
 	return alert
 }
