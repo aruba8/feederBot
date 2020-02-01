@@ -18,6 +18,19 @@
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:6147b51b0178e9170e04a24da35ae6cc1d138458b5f814cb3ca39b33e8603e17"
+  name = "github.com/aws/aws-lambda-go"
+  packages = [
+    "lambda",
+    "lambda/handlertrace",
+    "lambda/messages",
+    "lambdacontext",
+  ]
+  pruneopts = "UT"
+  revision = "b5b7267d297de263cc5b61f8c37543daa9c95ffd"
+  version = "v1.13.3"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -233,6 +246,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/aws/aws-lambda-go/lambda",
     "github.com/mmcdole/gofeed",
     "github.com/naoina/toml",
     "github.com/stretchr/testify/assert",

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/biomaks/feederBot/settings"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -88,8 +89,9 @@ func (m *MongodbStorage) FindAllAlerts(limit int64, orderBy string, orderDirecti
 	return results
 }
 
-func NewMongoStorage(dbURI string, dbName string, collectionName string) StorageInterface {
-	client, err := mongo.NewClient(options.Client().ApplyURI(dbURI))
+func NewMongoStorage(settings settings.Settings) StorageInterface {
+	mongoDb := settings.Database()
+	client, err := mongo.NewClient(options.Client().ApplyURI(mongoDb.ConnectionString()))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,8 +100,8 @@ func NewMongoStorage(dbURI string, dbName string, collectionName string) Storage
 	if err != nil {
 		log.Fatal(err)
 	}
-	db := client.Database(dbName)
-	collection := db.Collection(collectionName)
+	db := client.Database(settings.Database().Name)
+	collection := db.Collection(settings.Database().Name)
 	return &MongodbStorage{collection, ctx}
 }
 

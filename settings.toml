@@ -1,8 +1,14 @@
 [feeds]
-weather = 'https://weather.gc.ca/rss/battleboard/mb9_e.xml'
+    weather = 'https://weather.gc.ca/rss/battleboard/mb9_e.xml'
 
-[database]
-name = 'alerts'
-collection = 'alerts'
-uri = 'localhost'
-port = 27017
+[databases]
+    [databases.local]
+        name = 'alerts'
+        collection = 'alerts'
+        host = 'localhost'
+        port = 27017
+    [databases.prod]
+        name = 'weather'
+        collection = 'alerts'
+        host = 'cluster0-txu1v.mongodb.net'
+        port = 27017

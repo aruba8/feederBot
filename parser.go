@@ -17,7 +17,6 @@ func (p *Parser) ParseFeed(feed *gofeed.Feed) []services.Alert {
 	items := feed.Items
 	var results []services.Alert
 	for _, item := range items {
-
 		alert := convert(item, feed)
 		results = append(results, alert)
 	}
