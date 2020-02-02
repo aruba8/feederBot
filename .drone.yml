@@ -7,6 +7,10 @@ platform:
   os: linux
   arch: amd64
 
+workspace:
+  base: /go
+  path: src/github.com/biomaks/feederBot
+
 steps:
   - name: build
     image: golang
