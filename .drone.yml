@@ -1,0 +1,24 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: build
+    image: golang
+    environment:
+      GOOS: linux
+      GOARCH: amd64
+    commands:
+      - go build
+      - go test
+
+trigger:
+  branch:
+    - master
+  event:
+    - push

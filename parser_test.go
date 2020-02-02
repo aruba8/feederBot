@@ -86,8 +86,6 @@ func TestParser_ParseFeed(t *testing.T) {
 		assert.Equal(t, want[0].Published, got[0].Published)
 		assert.Equal(t, want[0].EntryId, got[0].EntryId)
 		assert.Equal(t, want[0].Categories, got[0].Categories)
-		//assert.Equal(t, want[0].Updated, got[0].Updated)
-		//assert.Equal(t, want[0].Datetime, got[0].Datetime)
 		assert.Equal(t, want[0].Title, got[0].Title)
 		assert.Equal(t, want[0].FeedLink, got[0].FeedLink)
 		assert.Equal(t, want[0].ID, got[0].ID)
