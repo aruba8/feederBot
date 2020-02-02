@@ -1,7 +1,6 @@
-package main
+package utils
 
 import (
-	"fmt"
 	"github.com/biomaks/feederBot/services"
 	"github.com/mmcdole/gofeed"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +80,6 @@ func TestParser_ParseFeed(t *testing.T) {
 		want = append(want, alert)
 		parser := NewFeedParser()
 		got := parser.ParseFeed(&feed)
-		fmt.Println(got)
 		assert.Equal(t, 1, len(got))
 		assert.Equal(t, want[0].Published, got[0].Published)
 		assert.Equal(t, want[0].EntryId, got[0].EntryId)
