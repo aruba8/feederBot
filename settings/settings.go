@@ -12,6 +12,7 @@ type Settings struct {
 	}
 	Databases   map[string]Database
 	Environment string
+	BotSettings BotSettings
 }
 
 type Database struct {
@@ -21,6 +22,10 @@ type Database struct {
 	Port        int
 	Password    string
 	environment string
+}
+
+type BotSettings struct {
+	Token string
 }
 
 func GetSettings() Settings {
@@ -56,4 +61,9 @@ func (s *Settings) Database() Database {
 	database := s.Databases[s.Environment]
 	database.Password = os.Getenv("DB_PASSWORD")
 	return database
+}
+
+func (s *Settings) Bot() BotSettings {
+	token := os.Getenv("TELEGRAM_BOT_TOKEN")
+	return BotSettings{token}
 }

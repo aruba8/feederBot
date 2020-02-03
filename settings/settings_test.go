@@ -55,3 +55,14 @@ func TestGetSettings(t *testing.T) {
 		})
 	})
 }
+
+func TestBot(t *testing.T) {
+	t.Run("test Bot returns set token", func(t *testing.T) {
+		testToken := "test_token_"
+		os.Setenv("TELEGRAM_BOT_TOKEN", testToken)
+		os.Setenv("SETTINGS_FILE_PATH", "../settings.toml")
+		s := GetSettings()
+		bot := s.Bot()
+		assert.Equal(t, testToken, bot.Token)
+	})
+}

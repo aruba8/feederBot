@@ -139,6 +139,14 @@
   revision = "73f8eece6fdcd902c185bf651de50f3828bed5ed"
 
 [[projects]]
+  digest = "1:68d47b952937168bcf571c6d78702619061d5238e39ba8e244d880f012975482"
+  name = "github.com/yanzay/tbot"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "16154935099aa91f03e77b4ecd9a40d1e0b66890"
+  version = "v2.1.0"
+
+[[projects]]
   digest = "1:0a12bf3f7574a10e1eb72c4f33beb3041d8beec4d33f82b9378ecfed2dfd8809"
   name = "go.mongodb.org/mongo-driver"
   packages = [
@@ -251,6 +259,7 @@
     "github.com/naoina/toml",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
+    "github.com/yanzay/tbot",
     "go.mongodb.org/mongo-driver/bson",
     "go.mongodb.org/mongo-driver/bson/primitive",
     "go.mongodb.org/mongo-driver/mongo",
