@@ -2,7 +2,7 @@ package services
 
 import (
 	"github.com/stretchr/testify/mock"
-	"github.com/yanzay/tbot"
+	"github.com/yanzay/tbot/v2"
 	"testing"
 )
 
@@ -10,8 +10,8 @@ type telegramMock struct {
 	mock.Mock
 }
 
-func (t *telegramMock) Send(text string, tm tbot.Message) (bool, error) {
-	args := t.Called(text, tm)
+func (t *telegramMock) Send(text string, chatID string) (bool, error) {
+	args := t.Called(text, chatID)
 	return args.Bool(0), args.Error(1)
 }
 
@@ -26,19 +26,11 @@ func (t *telegramMock) Server() *tbot.Server {
 }
 
 func TestTelegramService_SendMessage(t *testing.T) {
-	mock := telegramMock{}
+	telegramMock := telegramMock{}
 	t.Run("test send message", func(t *testing.T) {
-		mock.On("Send", "test", tbot.Message{
-			Chat: tbot.Chat{
-				ID: "1111",
-			},
-		}).Return(true, nil)
-		telegram := Telegram{&mock}
-		telegram.SendMessage("test", tbot.Message{
-			Chat: tbot.Chat{
-				ID: "1111",
-			},
-		})
-		mock.AssertNumberOfCalls(t, "Send", 1)
+		telegramMock.On("Send", "test", "22222222").Return(true, nil)
+		telegram := Telegram{&telegramMock}
+		telegram.SendMessage("test", "22222222")
+		telegramMock.AssertNumberOfCalls(t, "Send", 1)
 	})
 }

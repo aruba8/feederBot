@@ -2,11 +2,11 @@ package services
 
 import (
 	"github.com/biomaks/feederBot/settings"
-	"github.com/yanzay/tbot"
+	"github.com/yanzay/tbot/v2"
 )
 
 type TelegramInterface interface {
-	Send(text string, tm tbot.Message) (bool, error)
+	Send(text string, chatID string) (bool, error)
 	Client() *tbot.Client
 	Server() *tbot.Server
 }
@@ -20,8 +20,8 @@ type Telegram struct {
 	service TelegramInterface
 }
 
-func (t *TelegramService) Send(text string, tm tbot.Message) (bool, error) {
-	_, err := t.client.SendMessage(text, tm.Chat.ID)
+func (t *TelegramService) Send(chatID string, text string) (bool, error) {
+	_, err := t.client.SendMessage(chatID, text)
 	if err != nil {
 		return false, err
 	}
@@ -36,8 +36,8 @@ func (t *TelegramService) Server() *tbot.Server {
 	return t.server
 }
 
-func (t *Telegram) SendMessage(text string, tm tbot.Message) {
-	_, err := t.service.Send(text, tm)
+func (t *Telegram) SendMessage(chatID string, text string) {
+	_, err := t.service.Send(chatID, text)
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +51,7 @@ func (t *Telegram) GetServer() *tbot.Server {
 	return t.service.Server()
 }
 
-func NewTelegramService(token string) Telegram {
+func NewTelegramService() Telegram {
 	config := settings.GetSettings()
 	botSettings := config.Bot()
 	bot := tbot.New(botSettings.Token)

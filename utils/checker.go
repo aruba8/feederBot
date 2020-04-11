@@ -9,7 +9,7 @@ type Checker struct {
 func (c *Checker) Check(feedAlerts []services.Alert, dbAlert services.Alert) {
 	for _, alert := range feedAlerts {
 		if alert.Published.Unix() > dbAlert.Published.Unix() {
-			c.storageService.SaveAlert(alert)
+			_, _ = c.storageService.SaveAlert(alert)
 		}
 	}
 }
