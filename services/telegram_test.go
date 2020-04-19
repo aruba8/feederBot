@@ -10,8 +10,8 @@ type telegramMock struct {
 	mock.Mock
 }
 
-func (t *telegramMock) Send(text string, chatID string) (bool, error) {
-	args := t.Called(text, chatID)
+func (t *telegramMock) Send(chatID string, text string) (bool, error) {
+	args := t.Called(chatID, text)
 	return args.Bool(0), args.Error(1)
 }
 

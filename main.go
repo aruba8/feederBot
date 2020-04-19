@@ -10,12 +10,13 @@ import (
 )
 
 func HandleRequest(ctx context.Context) {
-	settings := settings.GetSettings()
+	appSettings := settings.GetSettings()
 	feeder := services.NewFeeder(gofeed.NewParser())
 	feedParser := utils.NewFeedParser()
-	feed, _ := feeder.GetFeed(settings.Feeds.Weather)
+	feed, _ := feeder.GetFeed(appSettings.Feeds.Weather)
 	alerts := feedParser.ParseFeed(feed)
-	mongoStorage := services.NewMongoStorage(settings)
+
+	mongoStorage := services.NewMongoStorage(appSettings)
 	storageService := services.NewStorageService(mongoStorage)
 	checker := utils.NewChecker(storageService.Storage)
 	dbAlerts := storageService.Storage.FindAllAlerts(1, "published", -1)
@@ -24,4 +25,14 @@ func HandleRequest(ctx context.Context) {
 
 func main() {
 	lambda.Start(HandleRequest)
+	//appSettings := settings.GetSettings()
+	//feeder := services.NewFeeder(gofeed.NewParser())
+	//feedParser := utils.NewFeedParser()
+	//feed, _ := feeder.GetFeed(appSettings.Feeds.Weather)
+	//alerts := feedParser.ParseFeed(feed)
+	//mongoStorage := services.NewMongoStorage(appSettings)
+	//storageService := services.NewStorageService(mongoStorage)
+	//checker := utils.NewChecker(storageService.Storage)
+	//dbAlerts := storageService.Storage.FindAllAlerts(1, "published", -1)
+	//checker.Check(alerts, dbAlerts[0])
 }
