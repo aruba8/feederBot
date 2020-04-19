@@ -38,12 +38,14 @@ jobs:
         env:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build:
+  build_deploy:
     name: Build
     runs-on: ubuntu-latest
     needs: [test]
+    env:
+      AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+      DEV_LAMBDA_FUNCTION: ${{ secrets.DEV_LAMBDA_FUNCTION }}
     steps:
-
     - name: Set up Go 1.13
       uses: actions/setup-go@v1
       with:
@@ -59,4 +61,23 @@ jobs:
     - name: Build
       run: go build -v .
 
+    - name: Zip
+      use: montudor/action-zip@v0.1.0
+      run: zip -qq function.zip feederBot settings.toml
 
+    - name: Push Template to S3
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Copy files to S3 with the AWS CLI
+      run: |
+        aws s3 cp function.zip s3://${AWS_S3_BUCKET}/${GITHUB_RUN_NUMBER}/
+        aws s3 sync s3://${AWS_S3_BUCKET}/${GITHUB_RUN_NUMBER} s3://${AWS_S3_BUCKET}/latest --delete
+
+    - name: Update function code
+      run: |
+        aws s3 cp function.zip s3://${AWS_S3_BUCKET}/${GITHUB_RUN_NUMBER}/
+        aws lambda update-function-code --function-name ${DEV_LAMBDA_FUNCTION} --s3-bucket s3://${AWS_S3_BUCKET}/latest/function.zip
