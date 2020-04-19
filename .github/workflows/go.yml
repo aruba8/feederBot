@@ -63,7 +63,8 @@ jobs:
 
     - name: Zip
       uses: montudor/action-zip@v0.1.0
-      run: zip -qq function.zip feederBot settings.toml
+      with:
+        args: zip -qq function.zip feederBot settings.toml
 
     - name: Push Template to S3
       uses: aws-actions/configure-aws-credentials@v1
