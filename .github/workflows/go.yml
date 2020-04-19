@@ -62,7 +62,7 @@ jobs:
       run: go build -v .
 
     - name: Zip
-      use: montudor/action-zip@v0.1.0
+      uses: montudor/action-zip@v0.1.0
       run: zip -qq function.zip feederBot settings.toml
 
     - name: Push Template to S3
