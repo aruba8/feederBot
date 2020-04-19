@@ -41,6 +41,7 @@ func TestSettings(t *testing.T) {
 	})
 
 	t.Run("Test correct connection string", func(t *testing.T) {
+		//os.Setenv("LAMBDA_ENVIRON", "")
 		s := GetSettings()
 		db := s.Database()
 		assert.Equal(t, "mongodb://localhost:27017", db.ConnectionString())

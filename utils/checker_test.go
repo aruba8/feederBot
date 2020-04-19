@@ -4,6 +4,7 @@ import (
 	"github.com/biomaks/feederBot/services"
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"log"
 	"testing"
 	"time"
 )
@@ -56,8 +57,9 @@ func TestChecker(t *testing.T) {
 		storageServiceMock.On("SaveAlert", mock.Anything).Return(true, nil)
 		checker := NewChecker(&storageServiceMock)
 		feedAlerts := createFeedAlerts()
-		dbAlert := createAlert(time.Now().Add(time.Duration(-24) * time.Hour))
-		checker.Check(feedAlerts, dbAlert)
+		dbAlerts := []services.Alert{createAlert(time.Now().Add(time.Duration(-24) * time.Hour))}
+		log.Println("test checker when feed alert is newer than db alert")
+		checker.Check(feedAlerts, dbAlerts)
 		storageServiceMock.AssertNumberOfCalls(t, "SaveAlert", 10)
 	})
 }
@@ -68,8 +70,9 @@ func TestNewChecker(t *testing.T) {
 		storageServiceMock.On("SaveAlert", mock.Anything).Return(true, nil)
 		checker := NewChecker(&storageServiceMock)
 		feedAlerts := createFeedAlerts()
-		dbAlert := createAlert(time.Now())
-		checker.Check(feedAlerts, dbAlert)
+		dbAlerts := []services.Alert{createAlert(time.Now())}
+		log.Println("test checker when feed alert is older than db alert")
+		checker.Check(feedAlerts, dbAlerts)
 		storageServiceMock.AssertNumberOfCalls(t, "SaveAlert", 0)
 	})
 }

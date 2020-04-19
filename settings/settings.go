@@ -16,12 +16,12 @@ type Settings struct {
 }
 
 type Database struct {
-	Name        string
-	Collection  string
-	Host        string
-	Port        int
-	Password    string
-	environment string
+	Username     string
+	Collection   string
+	Host         string
+	Port         int
+	Password     string
+	DatabaseName string
 }
 
 type BotSettings struct {
@@ -50,11 +50,13 @@ func GetSettings() Settings {
 func (d *Database) ConnectionString() string {
 	password := os.Getenv("DB_PASSWORD")
 	lambdaEnv := os.Getenv("LAMBDA_ENVIRON")
+	connectionString := ""
 	if lambdaEnv == "local" || len(lambdaEnv) == 0 {
-		return fmt.Sprintf("mongodb://%s:%d", d.Host, d.Port)
+		connectionString = fmt.Sprintf("mongodb://%s:%d", d.Host, d.Port)
 	} else {
-		return fmt.Sprintf("mongodb+srv://%s:%s@%s", d.Name, password, d.Host)
+		connectionString = fmt.Sprintf("mongodb+srv://%s:%s@%s", d.Username, password, d.Host)
 	}
+	return connectionString
 }
 
 func (s *Settings) Database() Database {

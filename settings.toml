@@ -3,12 +3,14 @@
 
 [databases]
     [databases.local]
-        name = 'alerts'
+        username = 'alerts'
         collection = 'alerts'
         host = 'localhost'
         port = 27017
+        databaseName = 'weather'
     [databases.prod]
-        name = 'weather'
+        username = 'wpg-db'
         collection = 'alerts'
         host = 'cluster0-txu1v.mongodb.net'
         port = 27017
+        databaseName = 'weather'

@@ -100,8 +100,8 @@ func NewMongoStorage(settings settings.Settings) StorageInterface {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db := client.Database(settings.Database().Name)
-	collection := db.Collection(settings.Database().Name)
+	db := client.Database(settings.Database().DatabaseName)
+	collection := db.Collection(settings.Database().Collection)
 	return &MongodbStorage{collection, ctx}
 }
 
