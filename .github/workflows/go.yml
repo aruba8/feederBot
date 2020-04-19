@@ -81,4 +81,4 @@ jobs:
     - name: Update function code
       run: |
         aws s3 cp function.zip s3://${AWS_S3_BUCKET}/${GITHUB_RUN_NUMBER}/
-        aws lambda update-function-code --function-name ${DEV_LAMBDA_FUNCTION} --s3-bucket s3://${AWS_S3_BUCKET}/latest/function.zip
+        aws lambda update-function-code --function-name ${DEV_LAMBDA_FUNCTION} --s3-bucket ${AWS_S3_BUCKET} --s3-key latest/function.zip > /dev/null
