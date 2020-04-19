@@ -14,15 +14,6 @@ type ParserInterface interface {
 	ParseURL(url string) (*gofeed.Feed, error)
 }
 
-type parserImpl struct {
-	parserSrv ParserInterface
-}
-
-func (p *parserImpl) ParseURL(url string) (*gofeed.Feed, error) {
-	feedParser := gofeed.NewParser()
-	return feedParser.ParseURL(url)
-}
-
 type feeder struct {
 	parser ParserInterface
 }

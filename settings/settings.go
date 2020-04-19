@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/naoina/toml"
 	"os"
+	"path/filepath"
 )
 
 type Settings struct {
@@ -31,7 +32,7 @@ type BotSettings struct {
 func GetSettings() Settings {
 	settingsPath := os.Getenv("SETTINGS_FILE_PATH")
 	lambdaEnv := os.Getenv("LAMBDA_ENVIRON")
-	f, err := os.Open(settingsPath)
+	f, err := os.Open(filepath.Clean(settingsPath))
 	if err != nil {
 		panic(err)
 	}

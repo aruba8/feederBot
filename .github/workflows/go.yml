@@ -7,37 +7,41 @@ on:
     branches: [ master ]
 
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      TZ: "America/Winnipeg"
+    steps:
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: install golangci-lint and goveralls
+        run: |
+          curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $GITHUB_WORKSPACE v1.23.8
+          go get -u github.com/mattn/goveralls
+
+      - name: lint
+        run: $GITHUB_WORKSPACE/golangci-lint --config ${GITHUB_WORKSPACE}/.golangci.yml run  ./...
+
+      - name: test
+        run: go test -race -timeout=30s -covermode=atomic -coverprofile=$GITHUB_WORKSPACE/profile.cov
+
+      - name: submit coverage
+        run: $(go env GOPATH)/bin/goveralls -service="github" -coverprofile=$GITHUB_WORKSPACE/profile.cov
+        env:
+          COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    steps:
-
-    - name: Set up Go 1.13
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.13
-      id: go
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-
-    - name: Get dependencies
-      run: |
-        go get -v -t -d ./...
-        if [ -f Gopkg.toml ]; then
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            dep ensure
-        fi
-
-    - name: Build
-      run: go build -v .
-
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    needs: [build]
+    needs: [test]
     steps:
 
     - name: Set up Go 1.13
@@ -52,5 +56,7 @@ jobs:
     - name: Get dependencies
       run: go get -v -t -d ./...
 
-    - name: Test
-      run: go test -v ./...
+    - name: Build
+      run: go build -v .
+
+
