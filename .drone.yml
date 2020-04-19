@@ -19,8 +19,6 @@ steps:
       GOARCH: amd64
     commands:
       - go version
-      - go get -u github.com/golang/dep/cmd/dep
-      - dep ensure -vendor-only
       - go build
       - go test ./...
 
