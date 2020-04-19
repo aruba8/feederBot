@@ -11,6 +11,7 @@ require (
 	github.com/golang/snappy v0.0.2-0.20190904063534-ff6b7dc882cf // indirect
 	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/mattn/goveralls v0.0.5 // indirect
 	github.com/mmcdole/gofeed v1.0.0-beta2
 	github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf // indirect
 	github.com/naoina/go-stringutil v0.1.0 // indirect
@@ -23,8 +24,7 @@ require (
 	github.com/yanzay/tbot/v2 v2.1.0
 	go.mongodb.org/mongo-driver v1.1.4
 	golang.org/x/crypto v0.0.0-20200115085410-6d4e4cb37c7d // indirect
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/tools v0.0.0-20200417140056-c07e33ef3290 // indirect
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )
