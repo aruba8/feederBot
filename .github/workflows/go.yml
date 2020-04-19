@@ -31,7 +31,7 @@ jobs:
         run: $GITHUB_WORKSPACE/golangci-lint --config ${GITHUB_WORKSPACE}/.golangci.yml run  ./...
 
       - name: test
-        run: go test -race -timeout=30s -covermode=atomic -coverprofile=$GITHUB_WORKSPACE/profile.cov
+        run: go test -race -timeout=30s -covermode=atomic -coverprofile=$GITHUB_WORKSPACE/profile.cov ./...
 
       - name: submit coverage
         run: $(go env GOPATH)/bin/goveralls -service="github" -coverprofile=$GITHUB_WORKSPACE/profile.cov

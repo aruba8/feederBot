@@ -5,3 +5,4 @@ go_build_github_com_biomaks_feederBot
 *.json
 *.zip
 *.out
+*.cov
