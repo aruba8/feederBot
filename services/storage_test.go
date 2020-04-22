@@ -1,66 +1,112 @@
 package services
 
 import (
+	"context"
+	"github.com/biomaks/feederBot/settings"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
+	"os"
 	"testing"
+	"time"
 )
 
-type storageMock struct {
-	mock.Mock
-}
+func TestStorage(t *testing.T) {
 
-func (s *storageMock) SaveAlert(alert Alert) (bool, error) {
-	args := s.Called(alert)
-	return args.Bool(0), args.Error(1)
-}
+	var dbMock DatabaseInterface
+	var collectionMock CollectionInterface
+	var cursorMock CursorInterface
 
-func (s *storageMock) FindAlerts(filter interface{}, sortBy string) []Alert {
-	args := s.Called(filter)
-	return args.Get(0).([]Alert)
-}
-
-func (s *storageMock) FindAllAlerts(limit int64, orderBy string, orderDirection int) []Alert {
-	args := s.Called(limit, orderBy, orderDirection)
-	return args.Get(0).([]Alert)
-}
-
-func M(a, b interface{}) []interface{} {
-	return []interface{}{a, b}
-}
-
-func TestMongodbStorage_FindAlerts(t *testing.T) {
+	dbMock = &MockDatabaseInterface{}
+	collectionMock = &MockCollectionInterface{}
+	cursorMock = &MockCursorInterface{}
 
 	t.Run("test FindAlerts", func(t *testing.T) {
-		theMock := storageMock{}
-		theMock.On("FindAlerts", bson.M{}).Return([]Alert{})
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		collectionMock.(*MockCollectionInterface).
+			On("Find", ctx, bson.M{}, options.Find().SetSort(bson.D{{
+				Key:   "",
+				Value: -1,
+			}})).
+			Return(cursorMock)
+		dbMock.(*MockDatabaseInterface).
+			On("Collection", "alerts").
+			Return(collectionMock)
 
-		stService := Storage{&theMock}
-		assert.Equal(t, []Alert{}, stService.Storage.FindAlerts(bson.M{}, ""))
-		theMock.AssertNumberOfCalls(t, "FindAlerts", 1)
-		theMock.AssertExpectations(t)
+		cursorMock.(*MockCursorInterface).On("Next", ctx).Return(false)
+		cursorMock.(*MockCursorInterface).On("Close", ctx).Return(nil)
+		cursorMock.(*MockCursorInterface).On("Err").Return(nil)
+
+		alertDb := NewMongoDatabase(dbMock)
+
+		alerts := alertDb.FindAlerts(ctx, bson.M{}, "")
+		log.Print(alerts)
+		assert.Empty(t, alerts)
 	})
-}
 
-func TestMongodbStorage_SaveAlert(t *testing.T) {
 	t.Run("test SaveAlert", func(t *testing.T) {
-		theMock := storageMock{}
-		theMock.On("SaveAlert", Alert{}).Return(true, nil)
-		stService := Storage{&theMock}
-		assert.Equal(t, M(true, nil), M(stService.Storage.SaveAlert(Alert{})))
-		theMock.AssertNumberOfCalls(t, "SaveAlert", 1)
-		theMock.AssertExpectations(t)
-	})
-}
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		alert := Alert{}
 
-func TestMongodbStorage_FindAllAlerts(t *testing.T) {
-	t.Run("test FindAllAlerts", func(t *testing.T) {
-		theMock := storageMock{}
-		theMock.On("FindAllAlerts", int64(1), "", 1).Return([]Alert{})
-		stService := Storage{&theMock}
-		assert.Equal(t, []Alert{}, stService.Storage.FindAllAlerts(int64(1), "", 1))
-		theMock.AssertNumberOfCalls(t, "FindAllAlerts", 1)
-		theMock.AssertExpectations(t)
+		collectionMock.(*MockCollectionInterface).
+			On("InsertOne", ctx, alert).
+			Return(bson.M{}, nil)
+		dbMock.(*MockDatabaseInterface).
+			On("Collection", "alerts").
+			Return(collectionMock)
+		alertDb := NewMongoDatabase(dbMock)
+		result, err := alertDb.SaveAlert(ctx, alert)
+
+		assert.Nil(t, err)
+		assert.Equal(t, true, result)
 	})
+
+	t.Run("test FindAllAlerts", func(t *testing.T) {
+
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		option := options.Find()
+		option.SetLimit(1)
+		option.SetSort(bson.D{{
+			Key:   "",
+			Value: 1,
+		}})
+
+		collectionMock.(*MockCollectionInterface).
+			On("Find", ctx, bson.D{}, option).
+			Return(cursorMock)
+		dbMock.(*MockDatabaseInterface).
+			On("Collection", "alerts").
+			Return(collectionMock)
+
+		cursorMock.(*MockCursorInterface).On("Next", ctx).Return(false)
+		cursorMock.(*MockCursorInterface).On("Close", ctx).Return(nil)
+		cursorMock.(*MockCursorInterface).On("Err").Return(nil)
+
+		alertDb := NewMongoDatabase(dbMock)
+
+		alerts := alertDb.FindAllAlerts(ctx, 1, "", 1)
+		assert.Empty(t, alerts)
+	})
+
+	t.Run("test NewDatabase", func(t *testing.T) {
+		os.Setenv("SETTINGS_FILE_PATH", "../settings.toml")
+		var clientInterface ClientInterface
+		clientInterface = &MockClientInterface{}
+		dbMock = &MockDatabaseInterface{}
+
+		testSettings := settings.GetSettings()
+
+		clientInterface.(*MockClientInterface).
+			On("Database", mock.Anything).
+			Return(dbMock)
+
+		db := NewDatabase(testSettings, clientInterface)
+
+		assert.Empty(t, db)
+		assert.IsType(t, &MockDatabaseInterface{}, db)
+
+	})
+
 }

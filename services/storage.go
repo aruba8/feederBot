@@ -11,44 +11,130 @@ import (
 	"time"
 )
 
-type StorageInterface interface {
-	SaveAlert(alert Alert) (bool, error)
-	FindAlerts(interface{}, string) []Alert
-	FindAllAlerts(limit int64, orderBy string, orderDirection int) []Alert
+const collectionName = "alerts"
+
+type CollectionInterface interface {
+	Find(ctx context.Context, filter interface{}, opt *options.FindOptions) CursorInterface
+	InsertOne(ctx context.Context, document interface{}) (interface{}, error)
 }
 
-type MongodbStorage struct {
-	collection *mongo.Collection
-	ctx        context.Context
+type DatabaseInterface interface {
+	Collection(name string) CollectionInterface
+	Client() ClientInterface
 }
 
-type Storage struct {
-	Storage StorageInterface
+type ClientInterface interface {
+	Database(string) DatabaseInterface
+	Connect() error
+	StartSession() (mongo.Session, error)
 }
 
-func (m *MongodbStorage) SaveAlert(alert Alert) (bool, error) {
-	_, err := m.collection.InsertOne(m.ctx, alert)
-	if err != nil {
-		return false, err
-	} else {
-		return true, err
-	}
+type CursorInterface interface {
+	Next(ctx context.Context) bool
+	Err() error
+	Close(ctx context.Context) error
+	Decode(interface{}) error
 }
 
-func (m *MongodbStorage) FindAlerts(filter interface{}, sortBy string) []Alert {
-	opts := options.Find()
-	opts.SetSort(bson.D{{
-		Key:   sortBy,
-		Value: -1,
-	}})
+type mongoCollection struct {
+	coll *mongo.Collection
+}
+type mongoClient struct {
+	client *mongo.Client
+}
+type mongoDatabase struct {
+	db *mongo.Database
+}
+type mongoSession struct {
+	mongo.Session
+}
 
-	cursor, err := m.collection.Find(m.ctx, filter, opts)
+func (mc *mongoCollection) Find(ctx context.Context, filter interface{}, opt *options.FindOptions) CursorInterface {
+	result, err := mc.coll.Find(ctx, filter, opt)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer cursor.Close(m.ctx)
+	return result
+}
+
+func (mc *mongoCollection) InsertOne(ctx context.Context, document interface{}) (interface{}, error) {
+	result, err := mc.coll.InsertOne(ctx, document)
+	return result, err
+}
+
+func (c *mongoClient) Database(dbName string) DatabaseInterface {
+	d := c.client.Database(dbName)
+	return &mongoDatabase{db: d}
+}
+
+func (c *mongoClient) Connect() error {
+	return c.client.Connect(nil)
+}
+
+func (c *mongoClient) StartSession() (mongo.Session, error) {
+	s, err := c.client.StartSession()
+	return &mongoSession{s}, err
+}
+
+func (mdb *mongoDatabase) Client() ClientInterface {
+	client := mdb.db.Client()
+	return &mongoClient{client}
+}
+
+func (mdb *mongoDatabase) Collection(name string) CollectionInterface {
+	collection := mdb.db.Collection(name)
+	return &mongoCollection{coll: collection}
+}
+
+func NewClient(settings settings.Settings) (ClientInterface, error) {
+	dbSettings := settings.Database()
+	c, err := mongo.NewClient(options.Client().ApplyURI(dbSettings.ConnectionString()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	cErr := c.Connect(nil)
+	if cErr != nil {
+		log.Fatal(cErr)
+	}
+	return &mongoClient{client: c}, err
+}
+
+func NewDatabase(settings settings.Settings, client ClientInterface) DatabaseInterface {
+	return client.Database(settings.Database().DatabaseName)
+}
+
+func NewMongoDatabase(db DatabaseInterface) StorageService {
+	return &storage{db: db}
+}
+
+type StorageService interface {
+	SaveAlert(ctx context.Context, alert Alert) (bool, error)
+	FindAlerts(ctx context.Context, filter interface{}, sortBy string) []Alert
+	FindAllAlerts(ctx context.Context, limit int64, orderBy string, orderDirection int) []Alert
+}
+
+type storage struct {
+	db  DatabaseInterface
+}
+
+func (s *storage) SaveAlert(ctx context.Context, alert Alert) (bool, error) {
+	_, err := s.db.Collection(collectionName).InsertOne(ctx, alert)
+	if err != nil {
+		return false, err
+	}
+	return true, err
+}
+
+func (s *storage) FindAlerts(ctx context.Context, filter interface{}, sortBy string) []Alert {
+	opt := options.Find()
+	opt.SetSort(bson.D{{
+		Key:   sortBy,
+		Value: -1,
+	}})
+	cursor := s.db.Collection(collectionName).Find(ctx, filter, opt)
+	defer cursor.Close(ctx)
 	var results []Alert
-	for cursor.Next(m.ctx) {
+	for cursor.Next(ctx) {
 		var alert Alert
 		err := cursor.Decode(&alert)
 		if err != nil {
@@ -62,20 +148,17 @@ func (m *MongodbStorage) FindAlerts(filter interface{}, sortBy string) []Alert {
 	return results
 }
 
-func (m *MongodbStorage) FindAllAlerts(limit int64, orderBy string, orderDirection int) []Alert {
+func (s *storage) FindAllAlerts(ctx context.Context, limit int64, orderBy string, orderDirection int) []Alert {
 	opts := options.Find()
 	opts.SetLimit(limit)
 	opts.SetSort(bson.D{{
 		Key:   orderBy,
 		Value: orderDirection,
 	}})
-	cursor, err := m.collection.Find(m.ctx, bson.D{}, opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer cursor.Close(m.ctx)
+	cursor := s.db.Collection(collectionName).Find(ctx, bson.D{}, opts)
+	defer cursor.Close(ctx)
 	var results []Alert
-	for cursor.Next(m.ctx) {
+	for cursor.Next(ctx) {
 		var alert Alert
 		err := cursor.Decode(&alert)
 		if err != nil {
@@ -87,26 +170,6 @@ func (m *MongodbStorage) FindAllAlerts(limit int64, orderBy string, orderDirecti
 		log.Fatal(err)
 	}
 	return results
-}
-
-func NewMongoStorage(settings settings.Settings) StorageInterface {
-	mongoDb := settings.Database()
-	client, err := mongo.NewClient(options.Client().ApplyURI(mongoDb.ConnectionString()))
-	if err != nil {
-		log.Fatal(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	db := client.Database(settings.Database().DatabaseName)
-	collection := db.Collection(settings.Database().Collection)
-	return &MongodbStorage{collection, ctx}
-}
-
-func NewStorageService(storageImpl StorageInterface) *Storage {
-	return &Storage{storageImpl}
 }
 
 type Alert struct {

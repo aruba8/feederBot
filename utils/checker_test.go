@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"github.com/biomaks/feederBot/services"
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,18 +14,18 @@ type storageMock struct {
 	mock.Mock
 }
 
-func (s *storageMock) SaveAlert(alert services.Alert) (bool, error) {
-	args := s.Called(alert)
+func (s *storageMock) SaveAlert(ctx context.Context, alert services.Alert) (bool, error) {
+	args := s.Called(ctx, alert)
 	return args.Bool(0), args.Error(1)
 }
 
-func (s *storageMock) FindAlerts(filter interface{}, sortBy string) []services.Alert {
-	args := s.Called(filter)
+func (s *storageMock) FindAlerts(ctx context.Context, filter interface{}, sortBy string) []services.Alert {
+	args := s.Called(ctx, filter)
 	return args.Get(0).([]services.Alert)
 }
 
-func (s *storageMock) FindAllAlerts(limit int64, orderBy string, orderDirection int) []services.Alert {
-	args := s.Called(limit, orderBy, orderDirection)
+func (s *storageMock) FindAllAlerts(ctx context.Context, limit int64, orderBy string, orderDirection int) []services.Alert {
+	args := s.Called(ctx, limit, orderBy, orderDirection)
 	return args.Get(0).([]services.Alert)
 }
 
@@ -53,8 +54,10 @@ func createAlert(publishedTime time.Time) services.Alert {
 
 func TestChecker(t *testing.T) {
 	storageServiceMock := storageMock{}
+
+
 	t.Run("test checker when feed alert is newer than db alert", func(t *testing.T) {
-		storageServiceMock.On("SaveAlert", mock.Anything).Return(true, nil)
+		storageServiceMock.On("SaveAlert", mock.Anything, mock.Anything).Return(true, nil)
 		checker := NewChecker(&storageServiceMock)
 		feedAlerts := createFeedAlerts()
 		dbAlerts := []services.Alert{createAlert(time.Now().Add(time.Duration(-24) * time.Hour))}
@@ -67,7 +70,7 @@ func TestChecker(t *testing.T) {
 func TestNewChecker(t *testing.T) {
 	storageServiceMock := storageMock{}
 	t.Run("test checker when feed alert is older than db alert", func(t *testing.T) {
-		storageServiceMock.On("SaveAlert", mock.Anything).Return(true, nil)
+		storageServiceMock.On("SaveAlert", mock.Anything, mock.Anything).Return(true, nil)
 		checker := NewChecker(&storageServiceMock)
 		feedAlerts := createFeedAlerts()
 		dbAlerts := []services.Alert{createAlert(time.Now())}

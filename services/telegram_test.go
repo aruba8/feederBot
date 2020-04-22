@@ -29,7 +29,7 @@ func TestTelegramService_SendMessage(t *testing.T) {
 	telegramMock := telegramMock{}
 	t.Run("test send message", func(t *testing.T) {
 		telegramMock.On("Send", "test", "22222222").Return(true, nil)
-		telegram := Telegram{&telegramMock}
+		telegram := Telegram{Service: &telegramMock}
 		telegram.SendMessage("test", "22222222")
 		telegramMock.AssertNumberOfCalls(t, "Send", 1)
 	})

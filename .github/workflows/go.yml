@@ -61,12 +61,12 @@ jobs:
     - name: Build
       run: go build -v .
 
-    - name: Zip
+    - name: Zip function
       uses: montudor/action-zip@v0.1.0
       with:
         args: zip -qq function.zip feederBot settings.toml
 
-    - name: Push Template to S3
+    - name: Configure AWS settings
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -78,7 +78,7 @@ jobs:
         aws s3 cp function.zip s3://${AWS_S3_BUCKET}/${GITHUB_RUN_NUMBER}/
         aws s3 sync s3://${AWS_S3_BUCKET}/${GITHUB_RUN_NUMBER} s3://${AWS_S3_BUCKET}/latest --delete
 
-    - name: Update function code
+    - name: Update lambda function code
       run: |
         aws s3 cp function.zip s3://${AWS_S3_BUCKET}/${GITHUB_RUN_NUMBER}/
         aws lambda update-function-code --function-name ${DEV_LAMBDA_FUNCTION} --s3-bucket ${AWS_S3_BUCKET} --s3-key latest/function.zip > /dev/null

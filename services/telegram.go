@@ -17,7 +17,7 @@ type TelegramService struct {
 }
 
 type Telegram struct {
-	service TelegramInterface
+	Service TelegramInterface
 }
 
 func (t *TelegramService) Send(chatID string, text string) (bool, error) {
@@ -37,18 +37,18 @@ func (t *TelegramService) Server() *tbot.Server {
 }
 
 func (t *Telegram) SendMessage(chatID string, text string) {
-	_, err := t.service.Send(chatID, text)
+	_, err := t.Service.Send(chatID, text)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func (t *Telegram) GetClient() *tbot.Client {
-	return t.service.Client()
+	return t.Service.Client()
 }
 
 func (t *Telegram) GetServer() *tbot.Server {
-	return t.service.Server()
+	return t.Service.Server()
 }
 
 func NewTelegramService() Telegram {
