@@ -68,7 +68,7 @@ func (c *mongoClient) Database(dbName string) DatabaseInterface {
 }
 
 func (c *mongoClient) Connect() error {
-	return c.client.Connect(nil)
+	return c.client.Connect(context.TODO())
 }
 
 func (c *mongoClient) StartSession() (mongo.Session, error) {
@@ -92,7 +92,7 @@ func NewClient(settings settings.Settings) (ClientInterface, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	cErr := c.Connect(nil)
+	cErr := c.Connect(context.TODO())
 	if cErr != nil {
 		log.Fatal(cErr)
 	}
