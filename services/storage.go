@@ -13,6 +13,10 @@ import (
 
 const collectionName = "alerts"
 
+type MongoClientInterface interface {
+	NewClient(*options.ClientOptions) *mongo.Client
+}
+
 type CollectionInterface interface {
 	Find(ctx context.Context, filter interface{}, opt *options.FindOptions) CursorInterface
 	InsertOne(ctx context.Context, document interface{}) (interface{}, error)
@@ -52,7 +56,7 @@ type mongoSession struct {
 func (mc *mongoCollection) Find(ctx context.Context, filter interface{}, opt *options.FindOptions) CursorInterface {
 	result, err := mc.coll.Find(ctx, filter, opt)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	return result
 }
@@ -86,15 +90,11 @@ func (mdb *mongoDatabase) Collection(name string) CollectionInterface {
 	return &mongoCollection{coll: collection}
 }
 
-func NewClient(settings settings.Settings) (ClientInterface, error) {
+func NewClient(settings settings.Settings, client func(opts ...*options.ClientOptions) (*mongo.Client, error)) (ClientInterface, error) {
 	dbSettings := settings.Database()
-	c, err := mongo.NewClient(options.Client().ApplyURI(dbSettings.ConnectionString()))
+	c, err := client(options.Client().ApplyURI(dbSettings.ConnectionString()))
 	if err != nil {
-		log.Fatal(err)
-	}
-	cErr := c.Connect(context.TODO())
-	if cErr != nil {
-		log.Fatal(cErr)
+		log.Panic(err)
 	}
 	return &mongoClient{client: c}, err
 }
@@ -114,13 +114,13 @@ type StorageService interface {
 }
 
 type storage struct {
-	db  DatabaseInterface
+	db DatabaseInterface
 }
 
 func (s *storage) SaveAlert(ctx context.Context, alert Alert) (bool, error) {
 	_, err := s.db.Collection(collectionName).InsertOne(ctx, alert)
 	if err != nil {
-		return false, err
+		log.Panic(err)
 	}
 	return true, err
 }
@@ -138,12 +138,12 @@ func (s *storage) FindAlerts(ctx context.Context, filter interface{}, sortBy str
 		var alert Alert
 		err := cursor.Decode(&alert)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 		results = append(results, alert)
 	}
 	if err := cursor.Err(); err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	return results
 }
@@ -162,12 +162,12 @@ func (s *storage) FindAllAlerts(ctx context.Context, limit int64, orderBy string
 		var alert Alert
 		err := cursor.Decode(&alert)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 		results = append(results, alert)
 	}
 	if err := cursor.Err(); err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	return results
 }

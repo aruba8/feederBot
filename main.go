@@ -7,6 +7,7 @@ import (
 	"github.com/biomaks/feederBot/settings"
 	"github.com/biomaks/feederBot/utils"
 	"github.com/mmcdole/gofeed"
+	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
@@ -17,8 +18,12 @@ func HandleRequest() {
 	feed, _ := feeder.GetFeed(appSettings.Feeds.Weather)
 	alerts := feedParser.ParseFeed(feed)
 
-	mongoClient, _ := services.NewClient(appSettings)
+	mongoClient, _ := services.NewClient(appSettings, mongo.NewClient)
 	mongoDb := services.NewDatabase(appSettings, mongoClient)
+	err := mongoDb.Client().Connect()
+	if err != nil {
+		panic(err)
+	}
 	mongoStorage := services.NewMongoDatabase(mongoDb)
 
 	checker := utils.NewChecker(mongoStorage)
