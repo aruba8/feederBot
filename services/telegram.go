@@ -3,58 +3,31 @@ package services
 import (
 	"github.com/biomaks/feederBot/settings"
 	"github.com/yanzay/tbot/v2"
+	"log"
 )
 
-type TelegramInterface interface {
-	Send(text string, chatID string) (bool, error)
-	Client() *tbot.Client
-	Server() *tbot.Server
+type BotClientInterface interface {
+	SendMessage(chatID string, text string) error
 }
 
-type TelegramService struct {
+type telegramBotClient struct {
 	client *tbot.Client
-	server *tbot.Server
 }
 
-type Telegram struct {
-	Service TelegramInterface
+func (tc *telegramBotClient) SendMessage(chatID string, text string) error {
+	_, err := tc.client.SendMessage(chatID, text)
+	return err
 }
 
-func (t *TelegramService) Send(chatID string, text string) (bool, error) {
-	_, err := t.client.SendMessage(chatID, text)
+func SendMessageToChat(client BotClientInterface, chatID string, text string) error {
+	err := client.SendMessage(chatID, text)
 	if err != nil {
-		return false, err
+		log.Panic(err)
 	}
-	return true, nil
+	return err
 }
 
-func (t *TelegramService) Client() *tbot.Client {
-	return t.client
-}
-
-func (t *TelegramService) Server() *tbot.Server {
-	return t.server
-}
-
-func (t *Telegram) SendMessage(chatID string, text string) {
-	_, err := t.Service.Send(chatID, text)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (t *Telegram) GetClient() *tbot.Client {
-	return t.Service.Client()
-}
-
-func (t *Telegram) GetServer() *tbot.Server {
-	return t.Service.Server()
-}
-
-func NewTelegramService() Telegram {
-	config := settings.GetSettings()
-	botSettings := config.Bot()
-	bot := tbot.New(botSettings.Token)
-	service := Telegram{&TelegramService{bot.Client(), bot}}
-	return service
+func NewTelegramBotClient(settings settings.Settings) BotClientInterface {
+	botSettings := settings.Bot()
+	return &telegramBotClient{client: tbot.New(botSettings.Token).Client()}
 }
